@@ -1,0 +1,4 @@
+.env
+complaint_categories.txt
+__pycache__/
+*.pyc
