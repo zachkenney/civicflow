@@ -148,7 +148,7 @@ def load(cursor, data):
         road_ramp, bridge_highway_direction, taxi_company_borough,
         taxi_pick_up_location, due_date
     ) VALUES %s
-    ON CONFLICT (unique_key) DO NOTHING
+    ON CONFLICT (unique_key) DO UPDATE
     '''
 
     execute_values(cursor, insert, rows)
