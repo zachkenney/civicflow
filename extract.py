@@ -16,7 +16,7 @@ def getData(cursor):
         '$order': 'created_date DESC'    
     }
     if last_load:
-        params['$where'] = f"created_date > '{last_load.strftime('%Y-%m-%dT%H:%M:%S')}'"
+        params['$where'] = f"created_date > '{last_load.strftime('%Y-%m-%dT%H:%M:%S')}' or resolution_action_updated_date > '{last_load.strftime('%Y-%m-%dT%H:%M:%S')}'"
     else: 
         params['$where'] = "created_date > '2026-05-25T00:00:00'"
 
