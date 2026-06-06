@@ -2,17 +2,9 @@ import psycopg2
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 import os
+from db import connect
 
-load_dotenv()
-
-conn = psycopg2.connect(
-    database=os.getenv('db_name'),
-    password=os.getenv('password'),
-    user=os.getenv('user'),
-    port=os.getenv('port'),
-    host=os.getenv('host'),
-    client_encoding='utf8'
-)
+connect()
 
 def setup(cursor):
     create_log = '''
@@ -74,13 +66,13 @@ def setup(cursor):
     cursor.execute(create_table)
     conn.commit()
 
-def connect():
-    try:
-        cursor = conn.cursor()
-        print('Connection to database successful.')
-    except Exception:
-        print('Unable to connect to database.')
-    return cursor
+# def connect():
+#     try:
+#         cursor = conn.cursor()
+#         print('Connection to database successful.')
+#     except Exception:
+#         print('Unable to connect to database.')
+#     return cursor
 
 def load(cursor, data):
 

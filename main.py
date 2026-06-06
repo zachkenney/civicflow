@@ -2,6 +2,7 @@ from extract import *
 from load import *
 import schedule
 import time
+from db import connect
 
 def run():
     cursor = connect()
