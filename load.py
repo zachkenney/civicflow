@@ -2,9 +2,8 @@ import psycopg2
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 import os
-from db import connect
+from db import connect, conn
 
-connect()
 
 def setup(cursor):
     create_log = '''
