@@ -84,6 +84,7 @@ def connect():
 
 def load(cursor, data):
 
+
     rows = [
         (
             row.get('unique_key'),
@@ -134,6 +135,17 @@ def load(cursor, data):
         for row in data
     ]
 
+    unique_keys = [row[0] for row in rows] #getting all the unique_keys in the current data load
+
+    cursor.execute('''
+    SELECT count(*)
+    FROM bronze."311"
+    WHERE unique_key in %s
+    ''', (unique_keys,))
+    unique_count = cursor.fetchone() 
+    #grabbed all rows already in the db based on if their unique_key is in the current data load
+    #this would be the rows that contain data that is getting updated.
+
     insert = '''
     INSERT INTO bronze."311" (
         unique_key, created_date, closed_date, agency, agency_name,
@@ -148,12 +160,20 @@ def load(cursor, data):
         road_ramp, bridge_highway_direction, taxi_company_borough,
         taxi_pick_up_location, due_date
     ) VALUES %s
-    ON CONFLICT (unique_key) DO UPDATE
+    ON CONFLICT (unique_key) DO UPDATE SET
+        status = EXCLUDED.status,
+        closed_date = EXCLUDED.closed_date,
+        resolution_description = EXCLUDED.resolution_description,
+        resolution_action_updated_date = EXCLUDED.resolution_action_updated_date,
+        due_date = EXCLUDED.due_date
     '''
 
     execute_values(cursor, insert, rows)
     conn.commit()
-    print(f'Loaded {len(rows)} rows into bronze.311.')
+    # the rows that get updated with new info should be what is in unique_count
+    # while the total updated should be the length of rows - those that got updated
+    print(f'{unique_count[0]} rows updated.')
+    print(f'Loaded {len(rows)-unique_count[0]} rows into bronze.311.')
 
     if len(rows) > 0: ## I only want to update this table if something actually returns, otherwise, an entry is made which will stop data being gathered.
         cursor.execute("INSERT INTO bronze.load_log DEFAULT VALUES")
