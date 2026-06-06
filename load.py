@@ -140,7 +140,7 @@ def load(cursor, data):
     cursor.execute('''
     SELECT count(*)
     FROM bronze."311"
-    WHERE unique_key in %s
+    WHERE unique_key = ANY(%s)
     ''', (unique_keys,))
     unique_count = cursor.fetchone() 
     #grabbed all rows already in the db based on if their unique_key is in the current data load
