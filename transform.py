@@ -7,20 +7,16 @@ from db import connect, conn
 cursor = connect()
 
 def setup(cursor):
-    create_log = '''
+    create_silver_log = '''
     CREATE TABLE IF NOT EXISTS silver.load_log (
-    loaded_at TIMESTAMP DEFAULT NOW());
+    loaded_at TIMESTAMP DEFAULT NOW()),
+    bronze_load_id INTEGER;
     '''
-    cursor.execute(create_log)
+    cursor.execute(create_silver_log)
     conn.commit()
 
-    bronze = '''
-    SELECT *
-    FROM bronze."311"
-    '''
-
     # at this layer i'm enforcing specific data types
-    create_table = '''
+    create_silver = '''
     CREATE TABLE IF NOT EXISTS silver."311" (
         unique_key VARCHAR PRIMARY KEY,
         created_date TIMESTAMP,
@@ -68,5 +64,20 @@ def setup(cursor):
         due_date TIMESTAMP,
         loaded_at TIMESTAMP DEFAULT NOW()
     )'''
-    cursor.execute(create_table)
+    cursor.execute(create_silver)
     conn.commit()
+
+    last_processed = '''
+    SELECT load_id
+    FROM silver.load_log
+    ORDER BY loaded_at DESC
+    LIMIT 1
+    '''
+
+    silver_data = '''
+    S
+    SELECT *
+    FROM bronze."311" 
+    JOIN bronze.load_log log
+    ON log.load_id = 311.load_id
+    '''

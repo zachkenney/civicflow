@@ -8,8 +8,8 @@ from db import connect, conn
 def setup(cursor):
     create_log = '''
     CREATE TABLE IF NOT EXISTS bronze.load_log (
-    loaded_at TIMESTAMP DEFAULT NOW()),
     load_id SERIAL PRIMARY KEY;
+    loaded_at TIMESTAMP DEFAULT NOW()),
     '''
     cursor.execute(create_log)
     conn.commit()
@@ -61,7 +61,7 @@ def setup(cursor):
         taxi_pick_up_location VARCHAR,
         due_date VARCHAR,
         loaded_at TIMESTAMP DEFAULT NOW(),
-        load_id INTEGER
+        load_id INTEGER REFERENCES bronze.load_log(load_id)
     )''' 
     # The data cosming from the API is being loaded as varchar for Bronze
     # so that if something unexpected is returned we don't crash.
