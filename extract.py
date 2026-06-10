@@ -20,7 +20,6 @@ def getData(cursor):
     else: 
         params['$where'] = "created_date > '2026-05-25T00:00:00'"
 
-
     while True:
         params['$offset'] = offset
         response = requests.get(url, params=params)

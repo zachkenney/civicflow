@@ -8,7 +8,8 @@ from db import connect, conn
 def setup(cursor):
     create_log = '''
     CREATE TABLE IF NOT EXISTS bronze.load_log (
-    loaded_at TIMESTAMP DEFAULT NOW());
+    loaded_at TIMESTAMP DEFAULT NOW()),
+    load_id SERIAL PRIMARY KEY;
     '''
     cursor.execute(create_log)
     conn.commit()
@@ -59,22 +60,17 @@ def setup(cursor):
         taxi_company_borough VARCHAR,
         taxi_pick_up_location VARCHAR,
         due_date VARCHAR,
-        loaded_at TIMESTAMP DEFAULT NOW()
-    )'''
+        loaded_at TIMESTAMP DEFAULT NOW(),
+        load_id INTEGER
+    )''' 
+    # The data cosming from the API is being loaded as varchar for Bronze
+    # so that if something unexpected is returned we don't crash.
+    # the Silver layer will start specifying exact data types.
 
     cursor.execute(create_table)
     conn.commit()
 
-# def connect():
-#     try:
-#         cursor = conn.cursor()
-#         print('Connection to database successful.')
-#     except Exception:
-#         print('Unable to connect to database.')
-#     return cursor
-
 def load(cursor, data):
-
 
     rows = [
         (
@@ -158,7 +154,6 @@ def load(cursor, data):
         resolution_action_updated_date = EXCLUDED.resolution_action_updated_date,
         due_date = EXCLUDED.due_date
     '''
-
     execute_values(cursor, insert, rows)
     conn.commit()
     # the rows that get updated with new info should be what is in unique_count
@@ -167,6 +162,8 @@ def load(cursor, data):
     print(f'Loaded {len(rows)-unique_count[0]} rows into bronze.311.')
 
     if len(rows) > 0: ## I only want to update this table if something actually returns, otherwise, an entry is made which will stop data being gathered.
-        cursor.execute("INSERT INTO bronze.load_log DEFAULT VALUES")
+        cursor.execute('INSERT INTO bronze.load_log DEFAULT VALUES RETURNING load_id')
+        load_id = cursor.fetchone()[0] # get the load_id back so that it can be inserted into the records we just sent to bronze
+        cursor.execute('UPDATE bronze."311" SET load_id = %s WHERE unique_key = ANY(%s)', (load_id, unique_keys))
         conn.commit()
 
