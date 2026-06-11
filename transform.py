@@ -4,13 +4,12 @@ from dotenv import load_dotenv
 import os
 from db import connect, conn
 
-cursor = connect()
-
-def setup(cursor):
+def silver_setup(cursor):
     create_silver_log = '''
     CREATE TABLE IF NOT EXISTS silver.load_log (
-    loaded_at TIMESTAMP DEFAULT NOW()),
-    bronze_load_id INTEGER;
+    run_id SERIAL PRIMARY KEY,
+    bronze_load_id INTEGER REFERENCES bronze.load_log(load_id),
+    loaded_at TIMESTAMP DEFAULT NOW());
     '''
     cursor.execute(create_silver_log)
     conn.commit()
@@ -68,16 +67,22 @@ def setup(cursor):
     conn.commit()
 
     last_processed = '''
-    SELECT load_id
+    SELECT bronze_load_id
     FROM silver.load_log
     ORDER BY loaded_at DESC
     LIMIT 1
     '''
+    cursor.execute(last_processed)
+    result = cursor.fetchone()
+    last_bronze_load_id = result[0] if result else 0
 
-    silver_data = '''
-    S
+# Grabbing the data from bronze to be passed into silver
+    cursor.execute(
+    '''
     SELECT *
     FROM bronze."311" 
     JOIN bronze.load_log log
-    ON log.load_id = 311.load_id
-    '''
+    ON log.load_id = "311".load_id
+    WHERE "311".load_id > %s
+    ''', (last_bronze_load_id,))
+    silver_data = cursor.fetchall()
