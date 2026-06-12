@@ -106,7 +106,7 @@ def silver_load():
             row.get('cross_street_2'),  # str
             row.get('address_type'),  # str
             row.get('city'),  # str
-            row.get('facility_type'),  # str
+            row.get('facility_type') if row.get('facility_type') not in (None, 'N/A') else None,  # str
             row.get('status'),  # str
             row.get('resolution_description'),  # str
             datetime.strptime(row.get('resolution_action_updated_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('resolution_action_updated_date') else None,  # datetime
