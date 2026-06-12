@@ -64,9 +64,9 @@ def gold_setup(cursor):
     )'''
     cursor.execute(create_gold)
     conn.commit()
-    
-    # the complaint types are incredibly granular so i think analysis would be aided by having more broad categories
-    complaint_category_map = {
+
+# the complaint types are incredibly granular so i think analysis would be aided by having more broad categories
+complaint_category_map = {
     # Noise
     'Noise': 'Noise',
     'Noise - Commercial': 'Noise',
@@ -213,9 +213,119 @@ def gold_setup(cursor):
 
     # General
     'General': 'General',
-    }
+}
 
 # the resolution types are often lengthy as they are the actualy responses given so i will map them to broader categories useful for analysis.
+def gold_load():
+    dict_cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    last_processed = '''
+    SELECT last_silver_run_id
+    FROM gold.load_log
+    ORDER BY loaded_at DESC
+    LIMIT 1
+    '''
+    dict_cursor.execute(last_processed)
+    result = dict_cursor.fetchone()
+    last_silver_run_id = result['last_silver_run_id'] if result else 0
+
+    # Grabbing the data from silver to be passed into gold
+    dict_cursor.execute(
+    '''
+    SELECT *
+    FROM silver."311"
+    JOIN silver.load_log log
+    ON log.run_id = "311".silver_load
+    WHERE "311".silver_load > %s
+    ''', (last_silver_run_id,))
+    silver_data = dict_cursor.fetchall()
+
+    rows = [
+        (
+            row.get('unique_key'),
+            row.get('created_date'),
+            row.get('closed_date'),
+            row.get('agency'),
+            row.get('agency_name'),
+            row.get('complaint_type'),
+            complaint_category_map.get(row.get('complaint_type'), 'Other'),
+            row.get('descriptor'),
+            row.get('incident_zip'),
+            row.get('incident_address'),
+            row.get('street_name'),
+            row.get('cross_street_1'),
+            row.get('cross_street_2'),
+            row.get('address_type'),
+            row.get('city'),
+            row.get('facility_type'),
+            row.get('status'),
+            map_resolution_category(row.get('resolution_description')),
+            row.get('resolution_action_updated_date'),
+            row.get('community_board'),
+            row.get('police_precinct'),
+            row.get('borough'),
+            row.get('open_data_channel_type'),
+            row.get('park_facility_name'),
+            row.get('park_borough'),
+            row.get('location_type'),
+            row.get('y_coordinate_state_plane'),
+            row.get('intersection_street_1'),
+            row.get('intersection_street_2'),
+            row.get('landmark'),
+            row.get('council_district'),
+            row.get('bbl'),
+            row.get('x_coordinate_state_plane'),
+            row.get('latitude'),
+            row.get('longitude'),
+            row.get('location'),
+            row.get('vehicle_type'),
+            row.get('descriptor_2'),
+            row.get('bridge_highway_name'),
+            row.get('bridge_highway_segment'),
+            row.get('road_ramp'),
+            row.get('bridge_highway_direction'),
+            row.get('taxi_company_borough'),
+            row.get('taxi_pick_up_location'),
+            row.get('due_date'),
+        )
+        for row in silver_data
+    ]
+    unique_keys = [row[0] for row in rows]
+
+    insert = '''
+    INSERT INTO gold."311" (
+        unique_key, created_date, closed_date, agency, agency_name,
+        complaint_type, complaint_category, descriptor, incident_zip, incident_address,
+        street_name, cross_street_1, cross_street_2, address_type, city,
+        facility_type, status, resolution_category, resolution_action_updated_date,
+        community_board, police_precinct, borough, open_data_channel_type,
+        park_facility_name, park_borough, location_type, y_coordinate_state_plane,
+        intersection_street_1, intersection_street_2, landmark, council_district,
+        bbl, x_coordinate_state_plane, latitude, longitude, location,
+        vehicle_type, descriptor_2, bridge_highway_name, bridge_highway_segment,
+        road_ramp, bridge_highway_direction, taxi_company_borough,
+        taxi_pick_up_location, due_date
+    ) VALUES %s
+    ON CONFLICT (unique_key) DO UPDATE SET
+        status = EXCLUDED.status,
+        closed_date = EXCLUDED.closed_date,
+        resolution_category = EXCLUDED.resolution_category,
+        complaint_category = EXCLUDED.complaint_category,
+        resolution_action_updated_date = EXCLUDED.resolution_action_updated_date,
+        due_date = EXCLUDED.due_date
+    '''
+    execute_values(dict_cursor, insert, rows)
+    conn.commit()
+
+    if silver_data:
+        last_silver_run_id = max(row['silver_load'] for row in silver_data)
+
+        dict_cursor.execute('INSERT INTO gold.load_log (last_silver_run_id) VALUES (%s) RETURNING run_id', (last_silver_run_id,))
+        gold_load_id = dict_cursor.fetchone()[0]
+        dict_cursor.execute('UPDATE gold."311" SET gold_load = %s WHERE unique_key = ANY(%s)', (gold_load_id, unique_keys))
+        conn.commit()
+
+
 def map_resolution_category(description):
     if not description:
         return None
