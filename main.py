@@ -9,8 +9,8 @@ from db import connect, conn
 def run():
     cursor = connect()
     setup(cursor)
-    data = getData(cursor)
-    load(cursor,data)
+    for batch in getData(cursor):
+        load(cursor, batch)
     silver_setup(cursor)
     silver_load()
     gold_setup(cursor)
