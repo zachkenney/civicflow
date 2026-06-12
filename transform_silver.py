@@ -93,11 +93,11 @@ def silver_load():
     rows = [
         (
             row.get('unique_key'),  # str
-            datetime.strptime(row.get('created_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('created_date') else None,  # datetime
+            datetime.strptime(row.get('created_date'), '%Y-%m-%dT%H:%M:%S.%f'),  # datetime
             datetime.strptime(row.get('closed_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('closed_date') else None,  # datetime
             row.get('agency'),  # str
             row.get('agency_name'),  # str
-            row.get('complaint_type'),  # str
+            row.get('complaint_type') or 'Other',  # str
             row.get('descriptor'),  # str
             row.get('incident_zip'),  # str
             row.get('incident_address'),  # str
@@ -112,7 +112,7 @@ def silver_load():
             datetime.strptime(row.get('resolution_action_updated_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('resolution_action_updated_date') else None,  # datetime
             row.get('community_board'),  # str
             row.get('police_precinct'),  # str
-            row.get('borough'),  # str
+            row.get('borough') or 'Unknown',  # str
             row.get('open_data_channel_type'),  # str
             row.get('park_facility_name'),  # str
             row.get('park_borough'),  # str
@@ -138,6 +138,7 @@ def silver_load():
             datetime.strptime(row.get('due_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('due_date') else None, # datetime
         )
         for row in silver_data
+        if row.get('created_date') # if created_date doesn't exist i'm just going to drop the row
     ]
     unique_keys = [row[0] for row in rows] #getting all the unique_keys in the current data load
 
