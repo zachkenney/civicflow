@@ -31,7 +31,7 @@ def getData(cursor):
         if len(batch) < limit:
             break
 
-        offset += limit
+        offset += limit # pagination. grab the limit amount, add to the offset
 
     print(f'Fetched {total} total records.')
 
