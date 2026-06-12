@@ -1,4 +1,5 @@
 .env
 complaint_categories.txt
+resolution_categories.txt
 __pycache__/
 *.pyc
