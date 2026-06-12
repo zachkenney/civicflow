@@ -8,8 +8,9 @@ from db import connect, conn
 def setup(cursor):
     create_log = '''
     CREATE TABLE IF NOT EXISTS bronze.load_log (
-    load_id SERIAL PRIMARY KEY;
-    loaded_at TIMESTAMP DEFAULT NOW()),
+    load_id SERIAL PRIMARY KEY,
+    loaded_at TIMESTAMP DEFAULT NOW()
+    );
     '''
     cursor.execute(create_log)
     conn.commit()
