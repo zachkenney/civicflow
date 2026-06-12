@@ -66,18 +66,21 @@ def silver_setup(cursor):
     cursor.execute(create_silver)
     conn.commit()
 
+def silver_load():
+    dict_cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
     last_processed = '''
     SELECT bronze_load_id
     FROM silver.load_log
     ORDER BY loaded_at DESC
     LIMIT 1
     '''
-    cursor.execute(last_processed)
-    result = cursor.fetchone()
-    last_bronze_load_id = result[0] if result else 0
+    dict_cursor.execute(last_processed)
+    result = dict_cursor.fetchone()
+    last_bronze_load_id = result['bronze_load_id'] if result else 0
 
 # Grabbing the data from bronze to be passed into silver
-    cursor.execute(
+    dict_cursor.execute(
     '''
     SELECT *
     FROM bronze."311" 
@@ -85,4 +88,81 @@ def silver_setup(cursor):
     ON log.load_id = "311".load_id
     WHERE "311".load_id > %s
     ''', (last_bronze_load_id,))
-    silver_data = cursor.fetchall()
+    silver_data = dict_cursor.fetchall()
+
+    rows = [
+        (
+            row.get('unique_key'),
+            row.get('created_date'),
+            row.get('closed_date'),
+            row.get('agency'),
+            row.get('agency_name'),
+            row.get('complaint_type'),
+            row.get('descriptor'),
+            row.get('incident_zip'),
+            row.get('incident_address'),
+            row.get('street_name'),
+            row.get('cross_street_1'),
+            row.get('cross_street_2'),
+            row.get('address_type'),
+            row.get('city'),
+            row.get('facility_type'),
+            row.get('status'),
+            row.get('resolution_description'),
+            row.get('resolution_action_updated_date'),
+            row.get('community_board'),
+            row.get('police_precinct'),
+            row.get('borough'),
+            row.get('open_data_channel_type'),
+            row.get('park_facility_name'),
+            row.get('park_borough'),
+            row.get('location_type'),
+            row.get('y_coordinate_state_plane'),
+            row.get('intersection_street_1'),
+            row.get('intersection_street_2'),
+            row.get('landmark'),
+            row.get('council_district'),
+            row.get('bbl'),
+            row.get('x_coordinate_state_plane'),
+            row.get('latitude'),
+            row.get('longitude'),
+            str(row.get('location')) if row.get('location') else None,
+            row.get('vehicle_type'),
+            row.get('descriptor_2'),
+            row.get('bridge_highway_name'),
+            row.get('bridge_highway_segment'),
+            row.get('road_ramp'),
+            row.get('bridge_highway_direction'),
+            row.get('taxi_company_borough'),
+            row.get('taxi_pick_up_location'),
+            row.get('due_date'),
+        )
+        for row in silver_data
+    ]
+
+    insert = '''
+    INSERT INTO silver."311" (
+        unique_key, created_date, closed_date, agency, agency_name,
+        complaint_type, descriptor, incident_zip, incident_address, street_name,
+        cross_street_1, cross_street_2, address_type, city, facility_type,
+        status, resolution_description, resolution_action_updated_date,
+        community_board, police_precinct, borough, open_data_channel_type,
+        park_facility_name, park_borough, location_type, y_coordinate_state_plane,
+        intersection_street_1, intersection_street_2, landmark, council_district,
+        bbl, x_coordinate_state_plane, latitude, longitude, location,
+        vehicle_type, descriptor_2, bridge_highway_name, bridge_highway_segment,
+        road_ramp, bridge_highway_direction, taxi_company_borough,
+        taxi_pick_up_location, due_date
+    ) VALUES %s
+    ON CONFLICT (unique_key) DO UPDATE SET
+        status = EXCLUDED.status,
+        closed_date = EXCLUDED.closed_date,
+        resolution_description = EXCLUDED.resolution_description,
+        resolution_action_updated_date = EXCLUDED.resolution_action_updated_date,
+        due_date = EXCLUDED.due_date
+    '''
+    execute_values(dict_cursor, insert, rows)
+    conn.commit()
+
+    dict_cursor.execute('INSERT INTO silver.load_log ')
+    # need to finish this. insert bronze_load_id into load_log
