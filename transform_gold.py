@@ -321,7 +321,7 @@ def gold_load():
         last_silver_run_id = max(row['silver_load'] for row in silver_data)
 
         dict_cursor.execute('INSERT INTO gold.load_log (last_silver_run_id) VALUES (%s) RETURNING run_id', (last_silver_run_id,))
-        gold_load_id = dict_cursor.fetchone()[0]
+        gold_load_id = dict_cursor.fetchone()['run_id']
         dict_cursor.execute('UPDATE gold."311" SET gold_load = %s WHERE unique_key = ANY(%s)', (gold_load_id, unique_keys))
         conn.commit()
 

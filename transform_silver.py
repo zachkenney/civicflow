@@ -169,6 +169,6 @@ def silver_load():
         last_bronze_load_id = max(row['load_id'] for row in silver_data)
 
         dict_cursor.execute('INSERT INTO silver.load_log (last_bronze_load_id) VALUES (%s) RETURNING run_id', (last_bronze_load_id,))
-        silver_load = dict_cursor.fetchone()[0]
-        dict_cursor.execute('UPDATE silver."311" SET silver_load = %s WHERE unique_key = ANY(%s)', (silver_load, unique_keys))
+        silver_run_id = dict_cursor.fetchone()['run_id']
+        dict_cursor.execute('UPDATE silver."311" SET silver_load = %s WHERE unique_key = ANY(%s)', (silver_run_id, unique_keys))
         conn.commit()
