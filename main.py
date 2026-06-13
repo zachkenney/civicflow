@@ -14,6 +14,7 @@ def run():
     silver_setup(cursor)
     silver_load()
     gold_setup(cursor)
+    populate_dim_date(cursor)
     gold_load()
 
 schedule.every(24).hours.do(run)

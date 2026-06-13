@@ -4,13 +4,15 @@ Data pipeline that ingests NYC 311 service request data from the NYC Open Data A
 
 The Jupyter notebook was just part of exploratory data analysis to understand how the data was structured. I kept it here as part of a portfolio.
 
+> !AI Usage: I used Claude Code to check my written code, assist with writing README, handle menial tasks like writing 40+ 'row.get()' for each row, and just as a springboard for ideas and nudging me through problems/tutoring. 
+
 ## Overview
 
 CivicFlow runs on a 24-hour schedule, pulling new and updated 311 complaints from the NYC Open Data API and moving them through three layers of a PostgreSQL data warehouse:
 
-- **Bronze** — raw data, all columns stored as VARCHAR to absorb API changes without breaking ingestion
-- **Silver** — typed and cleaned data, dates cast to TIMESTAMP and coordinates to NUMERIC
-- **Gold** — analysis-ready data with complaint and resolution categories mapped from the verbose raw values
+- **Bronze** - raw data, all columns stored as VARCHAR to absorb API changes without breaking ingestion
+- **Silver** - typed and cleaned data, dates cast to TIMESTAMP and coordinates to NUMERIC
+- **Gold** - analysis-ready data with complaint and resolution categories mapped from the verbose raw values
 
 ## Architecture
 
@@ -27,7 +29,7 @@ NYC Open Data API
   [ Silver ]   ── type casting, data validation
       │
       ▼
-  [ Gold ]     ── feature engineering, derived data like complaint_category & resolution_category
+  [ Gold ]     ── feature engineering, derived data like complaint_category &       resolution_category
       │
       ▼
   Power BI Dashboard
@@ -35,12 +37,12 @@ NYC Open Data API
 
 ## Tech Stack
 
-- **Python** — pipeline orchestration
-- **PostgreSQL** — medallion data warehouse (bronze / silver / gold schemas)
-- **psycopg2** — database driver
-- **schedule** — 24-hour run cadence
-- **NYC Open Data API** — 311 service request data
-- **Power BI** — dashboard and geospatial visualisation
+- **Python** - pipeline orchestration
+- **PostgreSQL** - medallion data warehouse (bronze / silver / gold schemas)
+- **psycopg2** - database driver
+- **schedule** - 24-hour run cadence
+- **NYC Open Data API** - 311 service request data
+- **Power BI** - dashboard and geospatial visualisation
 
 ## Key Features
 
