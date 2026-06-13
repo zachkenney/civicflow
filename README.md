@@ -2,6 +2,8 @@
 
 Data pipeline that ingests NYC 311 service request data from the NYC Open Data API, transforms it through a medallion architecture, and serves analysis-ready data to a Power BI dashboard.
 
+The Jupyter notebook was just part of exploratory data analysis to understand how the data was structured. I kept it here as part of a portfolio.
+
 ## Overview
 
 CivicFlow runs on a 24-hour schedule, pulling new and updated 311 complaints from the NYC Open Data API and moving them through three layers of a PostgreSQL data warehouse:
