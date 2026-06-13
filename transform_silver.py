@@ -3,6 +3,14 @@ from psycopg2.extras import execute_values
 from db import connect, conn
 from datetime import datetime
 
+def parse_dt(s):
+    if not s:
+        return None
+    try:
+        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S.%f')
+    except ValueError:
+        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+
 def silver_setup(cursor):
     create_silver_log = '''
     CREATE TABLE IF NOT EXISTS silver.load_log (
@@ -93,8 +101,8 @@ def silver_load():
     rows = [
         (
             row.get('unique_key'),  # str
-            datetime.strptime(row.get('created_date'), '%Y-%m-%dT%H:%M:%S.%f'),  # datetime
-            datetime.strptime(row.get('closed_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('closed_date') else None,  # datetime
+            parse_dt(row.get('created_date')),  # datetime
+            parse_dt(row.get('closed_date')),  # datetime
             row.get('agency'),  # str
             row.get('agency_name'),  # str
             row.get('complaint_type') or 'Other',  # str
@@ -109,7 +117,7 @@ def silver_load():
             row.get('facility_type') if row.get('facility_type') not in (None, 'N/A') else None,  # str
             row.get('status'),  # str
             row.get('resolution_description'),  # str
-            datetime.strptime(row.get('resolution_action_updated_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('resolution_action_updated_date') else None,  # datetime
+            parse_dt(row.get('resolution_action_updated_date')),  # datetime
             row.get('community_board'),  # str
             row.get('police_precinct'),  # str
             row.get('borough') or 'Unknown',  # str
@@ -135,7 +143,7 @@ def silver_load():
             row.get('bridge_highway_direction'),  # str
             row.get('taxi_company_borough'),  # str
             row.get('taxi_pick_up_location'),  # str
-            datetime.strptime(row.get('due_date'), '%Y-%m-%dT%H:%M:%S.%f') if row.get('due_date') else None, # datetime
+            parse_dt(row.get('due_date')),  # datetime
         )
         for row in silver_data
         if row.get('created_date') # if created_date doesn't exist i'm just going to drop the row

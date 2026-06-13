@@ -255,7 +255,7 @@ complaint_category_map = {
 # function for populating dim_date
 def populate_dim_date(cursor):
     cursor.execute('SELECT COUNT(*) FROM gold.dim_date')
-    if cursor.fetchone()['count'] > 0:
+    if cursor.fetchone()[0] > 0:
         return # checking that data doesn't exist before it runs
     else:
         start = date(2010,1,1)
